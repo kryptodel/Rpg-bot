@@ -45,7 +45,7 @@ module.exports = {
     for (const power of result.rows) {
       embed.addFields({
         name: `${power.name} (Lv. ${power.level})`,
-        value: `XP: \( {power.xp}/ \){power.xp_to_next_level} | Damage: ${power.base_damage} | Energy: \( {power.energy_cost}\n \){power.description || 'No description'}`
+        value: `XP: ${power.xp}/ ${power.xp_to_next_level} | Damage: ${power.base_damage} | Energy: ${power.energy_cost}\n ${power.description || 'No description'}`
       });
     }
 
