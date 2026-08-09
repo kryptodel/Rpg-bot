@@ -49,9 +49,9 @@ module.exports = {
         .setColor(0x0099FF)
         .addFields(
           { name: 'Level', value: `${player.level}`, inline: true },
-          { name: 'XP', value: `${player.xp}/ \){player.xp_to_next_level}`, inline: true },
-          { name: 'HP', value: `${player.hp}/ \){player.max_hp}`, inline: true },
-          { name: 'Energy', value: `${player.energy}/ \){player.max_energy}`, inline: true },
+          { name: 'XP', value: `${player.xp}/ ${player.xp_to_next_level}`, inline: true },
+          { name: 'HP', value: `${player.hp}/ ${player.max_hp}`, inline: true },
+          { name: 'Energy', value: `${player.energy}/ ${player.max_energy}`, inline: true },
           { name: 'Strength', value: `${player.strength}`, inline: true },
           { name: 'Speed', value: `${player.speed}`, inline: true },
           { name: 'Defense', value: `${player.defense}`, inline: true },
@@ -91,13 +91,23 @@ module.exports = {
         [discordId, interaction.user.username, character.id, character.race_id]
       );
 
+      await db.query(
+        `INSERT INTO player_powers (discord_id, power_id)
+         SELECT $1, p.id
+         FROM powers p
+         WHERE (p.character_id = $2 OR p.race_id = $3)
+           AND p.required_level <= 1
+         ON CONFLICT (discord_id, power_id) DO NOTHING`,
+        [discordId, character.id, character.race_id]
+      );
+
       const raceResult = await db.query(
         `SELECT name FROM races WHERE id = $1`,
         [character.race_id]
       );
 
       return interaction.reply({
-        content: `You chose **${character.name}** ( ${raceResult.rows[0].name})!`
+        content: `You chose **${character.name}** ( ${raceResult.rows[0].name})!\nStarting powers have been unlocked.`
       });
     }
   }
