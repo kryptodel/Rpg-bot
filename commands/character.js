@@ -49,9 +49,9 @@ module.exports = {
         .setColor(0x0099FF)
         .addFields(
           { name: 'Level', value: `${player.level}`, inline: true },
-          { name: 'XP', value: `\( {player.xp}/ \){player.xp_to_next_level}`, inline: true },
-          { name: 'HP', value: `\( {player.hp}/ \){player.max_hp}`, inline: true },
-          { name: 'Energy', value: `\( {player.energy}/ \){player.max_energy}`, inline: true },
+          { name: 'XP', value: `${player.xp}/ \){player.xp_to_next_level}`, inline: true },
+          { name: 'HP', value: `${player.hp}/ \){player.max_hp}`, inline: true },
+          { name: 'Energy', value: `${player.energy}/ \){player.max_energy}`, inline: true },
           { name: 'Strength', value: `${player.strength}`, inline: true },
           { name: 'Speed', value: `${player.speed}`, inline: true },
           { name: 'Defense', value: `${player.defense}`, inline: true },
@@ -97,7 +97,7 @@ module.exports = {
       );
 
       return interaction.reply({
-        content: `You chose **\( {character.name}** ( \){raceResult.rows[0].name})!`
+        content: `You chose **${character.name}** ( ${raceResult.rows[0].name})!`
       });
     }
   }
