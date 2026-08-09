@@ -1,11 +1,26 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, REST, Routes } = require('discord.js');
+const fs = require('fs');
+const path = require('path');
 const db = require('./db');
 const http = require('http');
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
 });
+
+client.commands = new Collection();
+
+const commandsPath = path.join(__dirname, 'commands');
+const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+
+for (const file of commandFiles) {
+  const filePath = path.join(commandsPath, file);
+  const command = require(filePath);
+  if ('data' in command && 'execute' in command) {
+    client.commands.set(command.data.name, command);
+  }
+}
 
 client.once('ready', async () => {
   console.log(`Logged in as ${client.user.tag}`);
@@ -16,14 +31,48 @@ client.once('ready', async () => {
   } catch (err) {
     console.error('Database connection failed:', err.message);
   }
+
+  const commands = [];
+  for (const file of commandFiles) {
+    const command = require(`./commands/${file}`);
+    commands.push(command.data.toJSON());
+  }
+
+  const rest = new REST().setToken(process.env.DISCORD_TOKEN);
+
+  try {
+    console.log('Registering slash commands...');
+    await rest.put(
+      Routes.applicationCommands(client.user.id),
+      { body: commands }
+    );
+    console.log('Slash commands registered successfully!');
+  } catch (error) {
+    console.error('Error registering commands:', error);
+  }
+});
+
+client.on('interactionCreate', async interaction => {
+  if (!interaction.isChatInputCommand()) return;
+
+  const command = client.commands.get(interaction.commandName);
+  if (!command) return;
+
+  try {
+    await command.execute(interaction);
+  } catch (error) {
+    console.error(error);
+    await interaction.reply({
+      content: 'An error occurred while executing this command.',
+      ephemeral: true
+    });
+  }
 });
 
 const PORT = process.env.PORT || 3000;
 http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/plain' });
   res.end('Bot is running');
-}).listen(PORT, () => {
-  console.log(`Listening on port ${PORT}`);
-});
+}).listen(PORT);
 
 client.login(process.env.DISCORD_TOKEN);
