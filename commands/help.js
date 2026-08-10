@@ -13,7 +13,7 @@ module.exports = {
       .addFields(
         {
           name: 'Getting Started',
-          value: '1. Use `/characters` to see available characters\n2. Use `/character choose name:Superman` to select one\n3. Start fighting and training!'
+          value: '1. Use `/characters` to see available characters\n2. Use `/character choose name:Superman` to select one\n3. Start fighting, training and buying items!'
         },
         {
           name: 'Commands',
@@ -26,6 +26,9 @@ module.exports = {
             '`/attack` - Attack another player\n' +
             '`/power` - Use a special power\n' +
             '`/train` - Train to gain XP\n' +
+            '`/shop` - View the item shop\n' +
+            '`/buy` - Buy an item from the shop\n' +
+            '`/inventory` - View your items\n' +
             '`/help` - Show this message'
         },
         {
@@ -39,10 +42,17 @@ module.exports = {
             '• The 3rd fight is a **Death Match** (loser resets progress)'
         },
         {
+          name: 'Points & Shop',
+          value: 
+            '• You earn **1 point** every time you send a message in the server\n' +
+            '• Use points to buy items in `/shop`\n' +
+            '• Items include equipment, consumables and special weapons like Kryptonite'
+        },
+        {
           name: 'Progression',
           value: 
             '• Using powers and winning fights gives XP\n' +
-            '• `/train` also gives XP (but small amounts)\n' +
+            '• `/train` also gives XP\n' +
             '• Switching characters **resets all progress** on this server\n' +
             '• Progress is separated by server'
         },
@@ -54,7 +64,7 @@ module.exports = {
             '• Death in a Death Match causes full reset'
         }
       )
-      .setFooter({ text: 'More features coming soon: Shop, Points system and Equipment' });
+      .setFooter({ text: 'New updates are coming soon...' });
 
     await interaction.reply({ embeds: [embed] });
   }
