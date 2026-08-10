@@ -6,7 +6,11 @@ const db = require('./db');
 const http = require('http');
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds]
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
+  ]
 });
 
 client.commands = new Collection();
@@ -66,6 +70,32 @@ client.on('interactionCreate', async interaction => {
       content: 'An error occurred while executing this command.',
       ephemeral: true
     });
+  }
+});
+
+client.on('messageCreate', async message => {
+  if (message.author.bot) return;
+  if (!message.guild) return;
+
+  const discordId = message.author.id;
+  const guildId = message.guild.id;
+
+  try {
+    const result = await db.query(
+      `SELECT discord_id FROM players WHERE discord_id = $1 AND guild_id = $2`,
+      [discordId, guildId]
+    );
+
+    if (result.rows.length === 0) return;
+
+    const pointsGained = 1;
+
+    await db.query(
+      `UPDATE players SET points = points + $1 WHERE discord_id = $2 AND guild_id = $3`,
+      [pointsGained, discordId, guildId]
+    );
+  } catch (err) {
+    console.error('Error giving points:', err.message);
   }
 });
 
