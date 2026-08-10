@@ -72,14 +72,33 @@ module.exports = {
     let powerId = null;
 
     const basicResult = await db.query(
-      `SELECT * FROM basic_attacks WHERE LOWER(name) = $1`,
-      [moveName]
+  `SELECT * FROM basic_attacks WHERE LOWER(name) = $1`,
+  [moveName]
+);
+
+if (basicResult.rows.length > 0) {
+  const basicMove = basicResult.rows[0];
+
+  if (basicMove.allowed_race) {
+    const raceCheck = await db.query(
+      `SELECT r.name FROM players p
+       JOIN races r ON r.id = p.race_id
+       WHERE p.discord_id = $1 AND p.guild_id = $2`,
+      [attackerId, guildId]
     );
 
-    if (basicResult.rows.length > 0) {
-      move = basicResult.rows[0];
-      isBasic = true;
-    } else {
+    if (raceCheck.rows.length === 0 || raceCheck.rows[0].name !== basicMove.allowed_race) {
+      return interaction.reply({
+        content: `Only **${basicMove.allowed_race}** can use ** ${basicMove.name}**.`,
+        ephemeral: true
+      });
+    }
+  }
+
+  move = basicMove;
+  isBasic = true;
+}
+    else {
 
       const powerResult = await db.query(
         `SELECT p.*, pp.level
