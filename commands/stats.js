@@ -8,14 +8,15 @@ module.exports = {
 
   async execute(interaction) {
     const discordId = interaction.user.id;
+    const guildId = interaction.guild.id;
 
     const result = await db.query(
       `SELECT p.*, c.name as character_name, r.name as race_name
        FROM players p
        LEFT JOIN characters c ON c.id = p.character_id
        LEFT JOIN races r ON r.id = p.race_id
-       WHERE p.discord_id = $1`,
-      [discordId]
+       WHERE p.discord_id = $1 AND p.guild_id = $2`,
+      [discordId, guildId]
     );
 
     if (result.rows.length === 0) {
@@ -34,6 +35,7 @@ module.exports = {
       .addFields(
         { name: 'Level', value: `${player.level}`, inline: true },
         { name: 'XP', value: `${player.xp} / ${player.xp_to_next_level}`, inline: true },
+        { name: 'Points', value: `${player.points}`, inline: true },
         { name: 'HP', value: `${player.hp} / ${player.max_hp}`, inline: true },
         { name: 'Energy', value: `${player.energy} / ${player.max_energy}`, inline: true },
         { name: 'Strength', value: `${player.strength}`, inline: true },
