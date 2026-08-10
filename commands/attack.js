@@ -12,7 +12,7 @@ module.exports = {
     )
     .addStringOption(option =>
       option.setName('move')
-        .setDescription('Attack name (punch, kick, heat vision...)')
+        .setDescription('Attack name (punch, kick, heat vision, energy_blast...)')
         .setRequired(true)
     ),
 
@@ -65,41 +65,39 @@ module.exports = {
       return interaction.reply({ content: 'You already fought 3 times against this player. No more fights allowed.', ephemeral: true });
     }
 
-    const isDeathMatch = currentFights === 2; 
+    const isDeathMatch = currentFights === 2;
 
     let move = null;
     let isBasic = false;
     let powerId = null;
 
     const basicResult = await db.query(
-  `SELECT * FROM basic_attacks WHERE LOWER(name) = $1`,
-  [moveName]
-);
-
-if (basicResult.rows.length > 0) {
-  const basicMove = basicResult.rows[0];
-
-  if (basicMove.allowed_race) {
-    const raceCheck = await db.query(
-      `SELECT r.name FROM players p
-       JOIN races r ON r.id = p.race_id
-       WHERE p.discord_id = $1 AND p.guild_id = $2`,
-      [attackerId, guildId]
+      `SELECT * FROM basic_attacks WHERE LOWER(name) = $1`,
+      [moveName]
     );
 
-    if (raceCheck.rows.length === 0 || raceCheck.rows[0].name !== basicMove.allowed_race) {
-      return interaction.reply({
-        content: `Only **${basicMove.allowed_race}** can use ** ${basicMove.name}**.`,
-        ephemeral: true
-      });
-    }
-  }
+    if (basicResult.rows.length > 0) {
+      const basicMove = basicResult.rows[0];
 
-  move = basicMove;
-  isBasic = true;
-}
-    else {
+      if (basicMove.allowed_race) {
+        const raceCheck = await db.query(
+          `SELECT r.name FROM players p
+           JOIN races r ON r.id = p.race_id
+           WHERE p.discord_id = $1 AND p.guild_id = $2`,
+          [attackerId, guildId]
+        );
 
+        if (raceCheck.rows.length === 0 || raceCheck.rows[0].name !== basicMove.allowed_race) {
+          return interaction.reply({
+            content: `Only **${basicMove.allowed_race}** can use ** ${basicMove.name}**.`,
+            ephemeral: true
+          });
+        }
+      }
+
+      move = basicMove;
+      isBasic = true;
+    } else {
       const powerResult = await db.query(
         `SELECT p.*, pp.level
          FROM powers p
@@ -136,11 +134,14 @@ if (basicResult.rows.length > 0) {
     );
 
     for (const passive of passiveBonus.rows) {
-      if (passive.name === 'Super Strength' || passive.name === 'Godly Strength') {
+      if (passive.name === 'Super Strength' || passive.name === 'Godly Strength' || passive.name === 'Divine Strength' || passive.name === 'Tamaranean Strength') {
         damage += 12;
       }
-      if (passive.name === 'Martial Arts Mastery' || passive.name === 'Amazonian Combat') {
+      if (passive.name === 'Martial Arts Mastery' || passive.name === 'Amazonian Combat' || passive.name === 'Acrobat Combat') {
         damage += 8;
+      }
+      if (passive.name === 'Tactile Telekinesis') {
+        damage += 10;
       }
     }
 
@@ -183,9 +184,9 @@ if (basicResult.rows.length > 0) {
     );
 
     await db.query(
-      `INSERT INTO battles (attacker_id, defender_id, power_id, damage_dealt, defender_hp_before, defender_hp_after, result, is_kill)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-      [attackerId, defenderId, powerId, damage, defender.hp, newHp, isKill ? 'defeated' : hitType, isKill]
+      `INSERT INTO battles (attacker_id, defender_id, power_id, damage_dealt, defender_hp_before, defender_hp_after, result, is_kill, guild_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [attackerId, defenderId, powerId, damage, defender.hp, newHp, isKill ? 'defeated' : hitType, isKill, guildId]
     );
 
     let message = `**${interaction.user.username}** used ** ${move.name}** on **${target.username}**!\n`;
