@@ -86,45 +86,41 @@ module.exports = {
         [discordId, guildId]
       );
 
-      if (existing.rows.length > 0 && existing.rows[0].character_id !== character.id) {
-        await db.query(`DELETE FROM player_powers WHERE discord_id = $1 AND guild_id = $2`, [discordId, guildId]);
-        await db.query(`DELETE FROM player_items WHERE discord_id = $1 AND guild_id = $2`, [discordId, guildId]);
-        await db.query(
-          `UPDATE players SET
-            character_id = $1,
-            race_id = $2,
-            hp = 100,
-            max_hp = 100,
-            energy = 100,
-            max_energy = 100,
-            strength = 10,
-            speed = 10,
-            defense = 10,
-            intelligence = 10,
-            combat = 10,
-            level = 1,
-            xp = 0,
-            xp_to_next_level = 100,
-            points = 0,
-            death_count = 0,
-            victory_count = 0,
-            defeat_count = 0,
-            max_level_reached = 1,
-            updated_at = NOW()
-           WHERE discord_id = $3 AND guild_id = $4`,
-          [character.id, character.race_id, discordId, guildId]
-        );
+      if (existing.rows.length > 0) {
+        if (existing.rows[0].character_id !== character.id) {
+          await db.query(`DELETE FROM player_powers WHERE discord_id = $1 AND guild_id = $2`, [discordId, guildId]);
+          await db.query(`DELETE FROM player_items WHERE discord_id = $1 AND guild_id = $2`, [discordId, guildId]);
+
+          await db.query(
+            `UPDATE players SET
+              character_id = $1,
+              race_id = $2,
+              hp = 100,
+              max_hp = 100,
+              energy = 100,
+              max_energy = 100,
+              strength = 10,
+              speed = 10,
+              defense = 10,
+              intelligence = 10,
+              combat = 10,
+              level = 1,
+              xp = 0,
+              xp_to_next_level = 100,
+              points = 0,
+              death_count = death_count,
+              victory_count = 0,
+              defeat_count = 0,
+              max_level_reached = 1,
+              updated_at = NOW()
+             WHERE discord_id = $3 AND guild_id = $4`,
+            [character.id, character.race_id, discordId, guildId]
+          );
+        }
       } else {
         await db.query(
           `INSERT INTO players (discord_id, guild_id, username, character_id, race_id)
-           VALUES ($1, $2, $3, $4, $5)
-           ON CONFLICT (discord_id) 
-           DO UPDATE SET 
-             guild_id = $2,
-             character_id = $4,
-             race_id = $5,
-             username = $3,
-             updated_at = NOW()`,
+           VALUES ($1, $2, $3, $4, $5)`,
           [discordId, guildId, interaction.user.username, character.id, character.race_id]
         );
       }
@@ -135,7 +131,7 @@ module.exports = {
          FROM powers p
          WHERE (p.character_id = $3 OR p.race_id = $4)
            AND p.required_level <= 1
-         ON CONFLICT DO NOTHING`,
+         ON CONFLICT (discord_id, guild_id, power_id) DO NOTHING`,
         [discordId, guildId, character.id, character.race_id]
       );
 
